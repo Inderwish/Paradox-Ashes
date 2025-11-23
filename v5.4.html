@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>悖论的灰烬：冰层之下 v5.4 (Audio/UI Fix)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@300;400;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;1,700&family=Great+Vibes&display=swap" rel="stylesheet">
+
+    <style>
+        /* === RESET & LAYOUT === */
+        html, body {
+            height: 100%; width: 100%; overflow: hidden; position: fixed;
+        }
+
+        /* === FONTS === */
+        .font-main { font-family: 'Noto Serif SC', serif; }
+        .font-sys { font-family: 'Space Mono', monospace; }
+        .font-elegant { font-family: 'Playfair Display', serif; }
+        .font-cursive { font-family: 'Great Vibes', cursive; }
+        .font-cn-cursive { font-family: 'Ma Shan Zheng', cursive; }
+        
+        /* === GLOBAL ATMOSPHERE === */
+        .crt-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.05) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 2px, 3px 100%; pointer-events: none; z-index: 40;
+            box-shadow: inset 0 0 80px rgba(0,0,0,0.3);
+        }
+
+        /* === THEMES === */
+        #main-bg-layer { position: absolute; inset: 0; z-index: -1; transition: background-color 1s ease; }
+        .theme-intro { background-color: #09090b; } .theme-beam { background-color: #e5e5e5; }
+        .theme-city { background-color: #ecfeff; } .theme-holograms { background-color: #0f172a; }
+        .theme-library { background-color: #fefce8; } .theme-train { background-color: #f8fafc; }
+        .theme-final { background-color: #000000; }
+
+        #content-scroll-area { transition: color 1s ease; }
+        .text-theme-intro { color: #a1a1aa; } .text-theme-beam { color: #404040; }
+        .text-theme-city { color: #164e63; } .text-theme-holograms { color: #ccfbf1; }
+        .text-theme-library { color: #713f12; } .text-theme-train { color: #334155; }
+        .text-theme-final { color: #71717a; }
+
+        /* === ANIMATIONS === */
+        .reveal-text { opacity: 0; transform: translateY(10px); transition: all 0.5s ease-out; }
+        .reveal-text.visible { opacity: 1; transform: translateY(0); }
+
+        .encrypted-span {
+            background-color: rgba(0,0,0,0.1); color: inherit; font-family: 'Space Mono', monospace;
+            cursor: pointer; padding: 0 4px; border-bottom: 1px dashed currentColor;
+            transition: all 0.3s ease; display: inline-block;
+        }
+        .theme-intro .encrypted-span { background-color: rgba(255,255,255,0.1); }
+        .encrypted-span:hover { background-color: currentColor; color: transparent; }
+        .encrypted-span:hover .visible-content { color: white; mix-blend-mode: difference; }
+        .encrypted-span.decrypted {
+            background-color: transparent; border-bottom: none; font-family: inherit; font-weight: bold;
+            cursor: default; animation: flash-text 0.5s ease;
+        }
+        .encrypted-span .hidden-content { display: none; }
+        .encrypted-span.decrypted .visible-content { display: none; }
+        .encrypted-span.decrypted .hidden-content { display: inline; }
+        @keyframes flash-text { 0% { background-color: #22c55e; color: white; } 100% { background-color: transparent; } }
+
+        /* === TERMINAL & UI === */
+        .terminal-box {
+            background-color: #09090b; color: #4ade80; font-family: 'Space Mono', monospace;
+            padding: 1rem; border: 1px solid #22c55e; box-shadow: 0 0 15px rgba(34, 197, 94, 0.2);
+            margin-top: 1.5rem; display: none; overflow: hidden; position: relative;
+        }
+        .terminal-box.active { display: block; animation: border-pulse 2s infinite; }
+        .terminal-close-btn {
+            position: absolute; top: 5px; right: 10px; cursor: pointer; color: #ef4444; font-size: 12px;
+            border: 1px solid #ef4444; padding: 0 4px; opacity: 0.7; transition: all 0.2s; z-index: 20;
+        }
+        .terminal-close-btn:hover { opacity: 1; background: #ef4444; color: #000; }
+        .terminal-line { display: block; margin-bottom: 0.2rem; opacity: 0; font-size: 0.85rem; }
+        .terminal-line.typed { opacity: 1; }
+
+        .hologram-box {
+            background-color: rgba(20, 184, 166, 0.1); border: 1px solid #2dd4bf; color: #2dd4bf;
+            font-family: 'Space Mono', monospace; padding: 1.5rem; margin-top: 1.5rem; display: none;
+            box-shadow: 0 0 20px rgba(45, 212, 191, 0.3); backdrop-filter: blur(4px); position: relative;
+        }
+        .hologram-box.active { display: block; }
+        .hologram-text { text-shadow: 0 0 5px currentColor, 0 0 15px currentColor, 0 0 30px rgba(45, 212, 191, 0.5); }
+        .glitch-hover { position: relative; cursor: help; }
+        .glitch-hover:hover::before, .glitch-hover:hover::after {
+            content: attr(data-text) or "“嘿，外面怎么样了？”";
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a;
+            overflow: hidden; clip: rect(0, 900px, 0, 0);
+        }
+        .glitch-hover:hover::before { left: 2px; text-shadow: -1px 0 red; animation: glitch-anim-1 2s infinite linear alternate-reverse; }
+        .glitch-hover:hover::after { left: -2px; text-shadow: -1px 0 blue; animation: glitch-anim-2 2s infinite linear alternate-reverse; }
+        @keyframes glitch-anim-1 { 0% { clip: rect(42px, 9999px, 44px, 0); } 100% { clip: rect(12px, 9999px, 80px, 0); } }
+        @keyframes glitch-anim-2 { 0% { clip: rect(15px, 9999px, 99px, 0); } 100% { clip: rect(70px, 9999px, 5px, 0); } }
+
+        /* === DECORATIONS === */
+        .tombstone-container {
+            width: 100%; max-width: 400px; margin: 2rem auto; background: #d4d4d8; border: 4px solid #a1a1aa;
+            border-radius: 200px 200px 0 0; padding: 4rem 2rem 2rem 2rem; text-align: center; position: relative;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s;
+        }
+        .tombstone-container:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(255,255,255,0.8); }
+
+        #snow-pile {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 0px;
+            background: linear-gradient(to top, #3f3f46, #a1a1aa 30%, #e4e4e7 100%);
+            transition: height 0.5s linear; z-index: 5; opacity: 0.98;
+            border-top: 2px solid #f4f4f5; border-radius: 60% 40% 0 0 / 30px 30px 0 0; pointer-events: none;
+        }
+        
+        #beam-flash { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+            background: white; opacity: 0; pointer-events: none; 
+            z-index: 9999; /* Highest Priority */
+            transition: opacity 0.1s ease-out;
+        }
+
+        .final-reveal-text {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: none; z-index: 30; opacity: 0; transition: opacity 2s ease; background: black;
+        }
+        .final-reveal-text.visible { opacity: 1; }
+
+        /* === MOBILE & SIDEBAR === */
+        #sidebar-backdrop {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5); z-index: 45; display: none;
+            backdrop-filter: blur(2px);
+        }
+        #sidebar-backdrop.visible { display: block; }
+
+        #sidebar {
+            z-index: 50; position: fixed; top: 0; left: 0; height: 100%;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 18rem; transform: translateX(-100%);
+        }
+        #sidebar.visible { transform: translateX(0); }
+        
+        @media (min-width: 768px) {
+            #sidebar { position: relative; transform: none; width: 18rem; opacity: 1; }
+            #sidebar.pc-collapsed { width: 0; opacity: 0; padding: 0; overflow: hidden; border: none; }
+            #sidebar-backdrop { display: none !important; }
+        }
+
+        #sidebar-toggle {
+            position: absolute; top: 1rem; left: 1rem; z-index: 60;
+            color: inherit; font-family: 'Space Mono', monospace; font-size: 1.5rem; cursor: pointer;
+            opacity: 0.5; transition: opacity 0.3s;
+        }
+        #sidebar-toggle:hover { opacity: 1; }
+
+        /* === MODALS === */
+        .custom-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8);
+            z-index: 100; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+        }
+        .custom-modal {
+            background: #18181b; border: 1px solid #ef4444; color: #ef4444; font-family: 'Space Mono', monospace;
+            width: 90%; max-width: 400px; box-shadow: 0 0 40px rgba(239, 68, 68, 0.4); transform: scale(0.95);
+        }
+        .custom-modal.type-system { border-color: #14b8a6; color: #14b8a6; box-shadow: 0 0 40px rgba(20, 184, 166, 0.4); }
+
+        /* === UTILS === */
+        .tech-grid { background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 20px 20px; opacity: 0.1; }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        #audio-toggle {
+            position: fixed; bottom: 1rem; right: 1rem; z-index: 60;
+            font-family: 'Space Mono', monospace; font-size: 10px;
+            color: rgba(255,255,255,0.3); cursor: pointer; border: 1px solid rgba(255,255,255,0.1);
+            padding: 4px 8px; transition: all 0.3s;
+        }
+        #audio-toggle:hover { color: #14b8a6; border-color: #14b8a6; }
+        #audio-toggle.active { color: #14b8a6; border-color: #14b8a6; box-shadow: 0 0 10px rgba(20, 184, 166, 0.2); }
+
+        /* === ICE ROOM STYLES === */
+        #ice-canvas {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 35; display: none; opacity: 0; transition: opacity 2s ease; pointer-events: none;
+        }
+        #ice-ui {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 36; display: none; opacity: 0; transition: opacity 1s ease 1s;
+            background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.6) 100%);
+            flex-direction: column; align-items: center; justify-content: center; pointer-events: none;
+        }
+        #ice-ui.active { display: flex; opacity: 1; pointer-events: auto; }
+        #ice-canvas.active { display: block; opacity: 1; }
+        
+        .ice-btn {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(165, 243, 252, 0.3);
+            color: rgba(165, 243, 252, 0.8); backdrop-filter: blur(5px);
+            padding: 12px 24px; font-family: 'Space Mono', monospace; font-size: 12px;
+            cursor: pointer; transition: all 0.3s ease; box-shadow: 0 0 20px rgba(165, 243, 252, 0.1);
+            text-transform: uppercase; letter-spacing: 2px; pointer-events: auto;
+        }
+        .ice-btn:hover {
+            background: rgba(165, 243, 252, 0.15); border-color: rgba(165, 243, 252, 0.8);
+            box-shadow: 0 0 30px rgba(165, 243, 252, 0.3); transform: scale(1.05);
+        }
+        
+        .ice-terminal {
+            position: absolute; bottom: 20%; width: 90%; max-width: 500px;
+            background: rgba(0, 10, 20, 0.85); border: 1px solid rgba(165, 243, 252, 0.5);
+            color: #cffafe; padding: 20px; font-family: 'Noto Serif SC', serif;
+            font-size: 14px; line-height: 1.8; box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            display: none; pointer-events: auto;
+        }
+        .frozen-text { text-shadow: 0 0 10px rgba(165, 243, 252, 0.8); }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #52525b; }
+        
+        #content-wrapper { position: relative; flex: 1; height: 100%; overflow: hidden; display: flex; flex-direction: column; }
+        #content-scroll-area { position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; z-index: 10; }
+    </style>
+</head>
+<body class="bg-zinc-900 text-zinc-200 font-main selection:bg-teal-900 selection:text-teal-50">
+
+    <!-- STARTUP -->
+    <div id="startup-overlay" onclick="bootSystem()">
+        <div class="animate-pulse text-3xl mb-6 tracking-widest">● SYSTEM DORMANT</div>
+        <div class="font-sys text-xs text-zinc-500 border border-zinc-800 p-2">[ TOUCH TO INITIALIZE ]</div>
+        <div class="absolute bottom-10 font-sys text-center text-zinc-800">
+            <div class="text-[10px] mb-1">AUDIO ENGINE v5.4: AUDIO SOFTEN & UI FIX</div>
+            <div class="text-[8px]">PUBLIC RELEASE</div>
+        </div>
+    </div>
+
+    <!-- AUDIO TOGGLE -->
+    <div id="audio-toggle" onclick="AudioManager.toggle()">AUDIO: OFF</div>
+
+    <!-- OVERLAYS -->
+    <div id="beam-flash"></div>
+    <div class="crt-overlay"></div>
+    <div id="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
+    <!-- ICE ROOM -->
+    <canvas id="ice-canvas"></canvas>
+    <div id="ice-ui">
+        <div class="absolute top-10 font-sys text-xs text-cyan-200/50 tracking-[0.5em] frozen-text">SUB-LAYER: GLACIER</div>
+        <button id="btn-decipher" class="ice-btn" onclick="IceRoom.triggerLogs()">[ 破译受损日志 ]</button>
+        <div id="ice-terminal" class="ice-terminal">
+            <div class="absolute top-2 right-2 cursor-pointer text-xs text-red-400 hover:text-red-200 border border-red-900/50 px-2 py-0.5" onclick="IceRoom.cancelLogs()">[X] CLOSE</div>
+            <div id="ice-log-content"></div>
+        </div>
+        <!-- UI FIX: Added contrast, background, and border -->
+        <button class="absolute bottom-10 text-xs text-cyan-200 hover:text-white transition-colors font-sys pointer-events-auto z-50 p-3 border border-cyan-500/30 bg-black/40 backdrop-blur-sm tracking-widest" onclick="IceRoom.exit()">
+            [ 紧急上浮 / EMERGENCY SURFACE ]
+        </button>
+    </div>
+
+    <!-- MODAL -->
+    <div id="modal-overlay" class="custom-modal-overlay" onclick="closeModal(event)">
+        <div id="modal-box" class="custom-modal">
+            <div class="flex justify-between bg-white/5 p-2 text-xs uppercase tracking-wider"><span id="modal-title">ERROR</span><span class="cursor-pointer">X</span></div>
+            <div class="p-8 text-center"><p id="modal-message" class="text-sm leading-relaxed">ACCESS DENIED</p><button class="mt-6 w-full border border-current py-2 hover:bg-white/10 text-xs transition-colors" onclick="closeModal(null, true)">ACKNOWLEDGE</button></div>
+        </div>
+    </div>
+
+    <!-- APP -->
+    <div class="flex h-full w-full opacity-0 transition-opacity duration-1000" id="app-wrapper">
+        <nav class="bg-black border-r border-zinc-800 flex flex-col shrink-0" id="sidebar">
+            <div class="p-8 border-b border-zinc-800 relative overflow-hidden shrink-0">
+                <div class="absolute top-0 right-0 p-1 font-sys text-[8px] text-zinc-800">v5.4</div>
+                <div class="flex items-center gap-2 mb-3"><div class="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div><span class="font-sys text-[10px] text-teal-500 tracking-widest">ONLINE</span></div>
+                <h2 class="text-3xl text-zinc-100 font-main font-bold tracking-wider relative z-10">悖论<br><span class="text-zinc-600 font-light">灰烬</span></h2>
+            </div>
+            <ul class="flex-1 py-6 space-y-1 overflow-y-auto font-sys text-xs min-h-0" id="nav-list"></ul>
+            <div class="p-6 border-t border-zinc-800 text-[10px] font-sys text-zinc-600 flex justify-between items-center shrink-0 bg-black z-10">
+                <span>MEM: <span class="text-teal-800">STABLE</span></span>
+                <span class="text-teal-900 hover:text-teal-500 transition-colors cursor-pointer p-1 border border-transparent hover:border-teal-900" onclick="showModal('彩蛋解析', '“别忘了那个矛盾。”<br>前文明最后的低语。<br><br>0x5F2A = HELP_US', 'system')">0x5F2A...</span>
+            </div>
+        </nav>
+        <div id="content-wrapper">
+            <div id="main-bg-layer" class="theme-intro"></div>
+            <div id="sidebar-toggle" onclick="toggleSidebar()" title="Toggle Sidebar">☰</div>
+            <canvas id="particle-canvas" class="absolute inset-0 pointer-events-none z-0 opacity-60 w-full h-full"></canvas>
+            <div id="snow-pile"></div>
+            <div id="content-scroll-area" class="text-theme-intro">
+                
+                <!-- 0. INTRO -->
+                <section id="home" class="content-section hidden relative min-h-full flex flex-col justify-center px-6 md:px-20 py-12 md:py-20">
+                    <div class="absolute top-0 left-0 w-full h-full tech-grid pointer-events-none"></div>
+                    <div class="absolute top-10 right-10 font-sys text-xs text-zinc-700 opacity-50 border border-zinc-800 p-1">SEC_LEVEL: Ø</div>
+                    <div class="max-w-3xl mx-auto w-full relative">
+                        <div class="font-sys text-zinc-600 text-xs tracking-[0.4em] mb-8 border-b border-zinc-800 pb-2 uppercase flex justify-between"><span>Archive_Root</span><span class="animate-pulse text-teal-900">///</span></div>
+                        <h1 class="text-6xl md:text-7xl font-main text-zinc-200 mb-12 reveal-text">悖论的<br><span class="text-zinc-600 italic font-elegant">灰烬</span></h1>
+                        <div class="space-y-8 text-lg leading-loose reveal-text relative z-10">
+                            <p class="border-l-2 border-zinc-700 pl-6 italic text-zinc-400 bg-black/50 p-4">“这是一个关于 <span class="encrypted-span" onclick="decrypt(this)"><span class="visible-content">#ERR_01</span><span class="hidden-content">极速的空转</span></span> 的故事。”</p>
+                            <p class="text-zinc-500">这个文明同时掌握了极致的效率与极致的浪漫，最终在自身的矛盾中“过热宕机”。</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 1. BEAM -->
+                <section id="beam" class="content-section hidden px-6 md:px-20 py-12 md:py-20">
+                    <div class="max-w-3xl mx-auto text-center">
+                        <div class="font-sys text-zinc-400 text-xs tracking-[0.4em] mb-8">FILE_01 // WEAPON</div>
+                        <div class="tombstone-container mx-auto mb-12 reveal-text group" onclick="triggerBeamAnimation()" title="点击演示：审判降临">
+                            <div class="absolute top-4 left-1/2 transform -translate-x-1/2 text-zinc-300 text-4xl opacity-50 group-hover:text-red-400 transition-colors">†</div>
+                            <h2 class="text-4xl font-main text-zinc-700 mb-2">纯白的审判</h2>
+                            <p class="font-elegant italic text-xl text-zinc-400 mb-6">The Pristine Tombstone</p>
+                            <p class="tombstone-engraving text-sm text-red-900/30 animate-pulse group-hover:text-red-800">CLICK TO EXECUTE</p>
+                        </div>
+                        <div class="text-left space-y-6 text-lg text-zinc-600 leading-relaxed reveal-text">
+                            <p>一切的终结并非始于轰鸣，而是始于一场过分安静的大扫除。它没有留下焦黑的尸骸，只有无尽的粉尘。</p>
+                            <div class="text-center mt-8">
+                                <button class="font-sys text-xs border border-zinc-400 px-4 py-2 hover:bg-zinc-200 transition-colors" onclick="unlockBeam(this)">▶ [恢复数据碎片]</button>
+                                <div id="terminal-beam" class="terminal-box text-left"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. CITY -->
+                <section id="city" class="content-section hidden px-6 md:px-20 py-12 md:py-20">
+                    <div class="max-w-3xl mx-auto relative z-10">
+                        <div class="font-sys text-blue-300 text-xs tracking-[0.4em] mb-4">FILE_02 // ARCHITECTURE</div>
+                        <h1 class="text-5xl font-main text-slate-800 mb-2">冻结的钢铁阔叶林</h1>
+                        <h2 class="font-elegant italic text-2xl text-slate-400 mb-12">The Frozen Jungle</h2>
+                        <div class="reveal-text space-y-6 text-lg text-slate-700 leading-relaxed">
+                            <p>那些建筑如热带雨林的植物般盘曲折叠，肆意地挥霍着空间。</p>
+                            <div class="bg-white/60 backdrop-blur-md p-10 border-y-4 border-blue-200 shadow-lg my-10 text-center relative overflow-hidden">
+                                <div class="absolute -right-10 -top-10 text-9xl text-blue-50 opacity-50 font-cursive rotate-12">Snow</div>
+                                <p class="mb-6 font-sys text-xs text-blue-500 uppercase tracking-widest relative z-10">Phenomenon Detected</p>
+                                <div class="text-5xl font-main text-slate-900 leading-tight relative z-10"><span class="font-cursive text-7xl text-blue-900 block mb-2">Impure Snow</span><span class="font-cn-cursive text-7xl text-blue-800 block">不洁的初雪</span></div>
+                            </div>
+                            <p>寒流裹挟着光束制造的文明骨灰，凝结成沉重、肮脏的灰雪。</p>
+                            <div class="mt-12 flex flex-col gap-4 items-center">
+                                <div><button class="font-sys text-xs border border-blue-300 text-blue-600 px-4 py-2 hover:bg-blue-50 transition-colors" onclick="unlockCity(this)">▶ [分析气象样本]</button><div id="terminal-city" class="terminal-box"></div></div>
+                                <button class="mt-4 group relative px-8 py-3 bg-slate-900 text-cyan-200 font-sys text-xs tracking-widest border border-cyan-800 hover:border-cyan-400 hover:shadow-[0_0_20px_rgba(34,211,238,0.3)] transition-all overflow-hidden cursor-pointer" onclick="IceRoom.enter()">
+                                    <span class="relative z-10">[ 潜入冰层深处 ]</span><div class="absolute inset-0 bg-cyan-900/50 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. HOLOGRAMS -->
+                <section id="holograms" class="content-section hidden px-6 md:px-20 py-12 md:py-20">
+                    <div class="max-w-3xl mx-auto">
+                        <div class="font-sys text-teal-500 text-xs tracking-[0.4em] mb-4">FILE_03 // CITIZENS</div>
+                        <h1 class="text-5xl font-main text-teal-50 mb-2 hologram-text">琥珀里的回声</h1>
+                        <div class="my-12 border border-teal-900 bg-slate-900/80 p-8 relative overflow-hidden group reveal-text hover:border-teal-500 transition-colors">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-teal-500 shadow-[0_0_15px_#14b8a6]"></div>
+                            <div class="font-sys text-[10px] text-teal-600 mb-8 flex justify-between"><span>REC: #10492</span><span class="animate-pulse text-red-400">● UNSTABLE SIGNAL</span></div>
+                            <div class="text-center"><p class="text-4xl font-serif italic text-teal-100 mb-4 glitch-hover">“嘿，外面怎么样了？”</p></div>
+                            <div class="text-center mt-8 border-t border-teal-900/50 pt-6">
+                                <button class="font-sys text-[10px] text-teal-500 border border-teal-800 px-3 py-1 hover:bg-teal-900/30 transition-colors" onclick="unlockHologram(this)">▶ [ 强制解码 ]</button>
+                                <div id="hologram-output" class="hologram-box text-left mt-4"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. LIBRARY -->
+                <section id="library" class="content-section hidden px-6 md:px-20 py-12 md:py-20 h-full">
+                    <div class="max-w-3xl mx-auto relative z-10">
+                        <div class="font-sys text-yellow-700 text-xs tracking-[0.4em] mb-4">FILE_04 // KNOWLEDGE</div>
+                        <h1 class="text-5xl font-main text-yellow-900 mb-2">加密的叹息</h1>
+                        <h2 class="font-elegant italic text-2xl text-yellow-600 mb-12">The Silent Babel</h2>
+                        <div class="space-y-6 text-lg text-yellow-800 leading-relaxed reveal-text">
+                            <p>在离太阳最近的图书馆里，上演着一场无声的哑剧。</p>
+                            <div class="bg-yellow-900/5 border border-yellow-600/30 p-6 my-6 font-sys text-sm relative overflow-hidden min-h-48 group">
+                                <p class="text-yellow-600 mb-4 text-[10px] border-b border-yellow-600/20 pb-2">// FRAGMENT_DUMP_V2.0:</p>
+                                <div id="library-content" class="space-y-3 overflow-y-auto h-full pb-10 relative z-10">
+                                    <p class="cursor-help hover:text-red-600 transition-colors" onclick="showModal('DECRYPTION FAILED', 'ERROR: MISSING_KEY<br>错误：罗塞塔密钥缺失')">0x4F ‡‡ 0x9A ... [DATA_LOSS] ... ❤</p>
+                                    <p class="cursor-help hover:text-red-600 transition-colors" onclick="showModal('DECRYPTION FAILED', 'ERROR: LOGIC_COLLAPSE<br>错误：逻辑门无法解析情感')">∆∆∆ ∑ πr² ... [NULL_POINTER] ... Ø</p>
+                                    <p class="cursor-help hover:text-red-600 transition-colors" onclick="showModal('DECRYPTION FAILED', 'ERROR: VOID_RETURN<br>错误：指向虚无的指针')">∂x/∂y ... ∞ ... [VOID]</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. TRAIN -->
+                <section id="train" class="content-section hidden px-6 md:px-20 py-12 md:py-20">
+                    <div class="max-w-3xl mx-auto">
+                        <div class="font-sys text-slate-400 text-xs tracking-[0.4em] mb-4">FILE_05 // TRANSIT</div>
+                        <h1 class="text-5xl font-main text-slate-800 mb-2 italic">切断时间的银矢</h1>
+                        <div class="w-full h-16 bg-slate-100 border-y border-slate-300 mt-8 mb-8 relative overflow-hidden flex items-center px-6">
+                            <div class="absolute top-0 left-0 h-full w-full bg-[repeating-linear-gradient(90deg,transparent,transparent_20px,rgba(0,0,0,0.1)_20px,rgba(0,0,0,0.1)_21px)] animate-[slide_0.1s_linear_infinite]" id="speed-strips"></div>
+                            <div class="relative z-10 font-sys text-xs text-slate-600 w-full flex justify-between items-center">
+                                <div><span class="block text-[10px] text-slate-400">STATUS</span><span id="vel-display" class="text-lg font-bold">2400</span> <span class="text-xs">KM/H</span></div>
+                                <div class="flex-1 mx-8 h-px bg-slate-300 relative overflow-hidden"><div class="absolute top-0 left-0 w-full h-full bg-red-500/20 animate-pulse"></div></div>
+                                <div class="text-right"><span class="block text-[10px] text-slate-400">MANIFEST</span><span class="text-lg text-red-600 font-bold animate-pulse">PASSENGERS: 0</span></div>
+                            </div>
+                        </div>
+                        <style>@keyframes slide { from { transform: translateX(0); } to { transform: translateX(-21px); } }</style>
+                        <div class="reveal-text flex justify-end mb-4"><button id="speed-btn" class="font-sys text-[10px] border border-slate-400 text-slate-500 px-3 py-1 hover:bg-red-50 hover:text-red-500 transition-colors" onclick="cycleSpeed(this)">[ ENGAGE ACCELERATION ]</button></div>
+                    </div>
+                </section>
+
+                <!-- 6. FINAL -->
+                <section id="final" class="content-section hidden cursor-pointer min-h-full w-full flex flex-col justify-center items-center" onclick="revealFinal(this)">
+                    <div id="final-content" class="text-center max-w-2xl transition-opacity duration-1000">
+                        <div class="font-sys text-red-900 text-xs tracking-[0.4em] mb-12">FILE_END // ANALYSIS</div>
+                        <div class="py-8 border-y border-zinc-800 mb-8"><p class="text-3xl md:text-4xl font-main leading-snug text-zinc-500">“他们是一群活在<br><span class="font-elegant italic text-zinc-300">Efficiency</span> 与 <span class="font-elegant italic text-zinc-300">Waste</span><br>夹缝中的悲剧。”</p></div>
+                        <p class="text-zinc-600 text-xs font-sys animate-pulse mt-20">[ TOUCH TO TERMINATE ]</p>
+                    </div>
+                    <div class="final-reveal-text flex-col"><p class="text-[12vw] leading-none font-cursive text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)] text-center">Paradox<br>Ashes</p><p class="font-sys text-zinc-500 text-xs tracking-widest mt-8">SYSTEM HALTED.</p></div>
+                </section>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === ICE ROOM WEBGL MANAGER ===
+        const IceGlManager = {
+            canvas: null, gl: null, program: null, running: false, startTime: 0,
+            vsSource: `attribute vec4 aVertexPosition; void main() { gl_Position = aVertexPosition; }`,
+            fsSource: `precision mediump float; uniform vec2 uResolution; uniform float uTime;
+                float random(vec2 st) { return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123); }
+                float noise(vec2 st) { vec2 i = floor(st); vec2 f = fract(st); float a = random(i); float b = random(i + vec2(1.0, 0.0)); float c = random(i + vec2(0.0, 1.0)); float d = random(i + vec2(1.0, 1.0)); vec2 u = f * f * (3.0 - 2.0 * f); return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y; }
+                float fbm(vec2 st) { float v = 0.0; float a = 0.5; for(int i=0; i<5; i++){ v += a * noise(st); st *= 2.0; a *= 0.5; } return v; }
+                void main() {
+                    vec2 uv = gl_FragCoord.xy / uResolution.xy; uv.x *= uResolution.x / uResolution.y;
+                    float dust = step(0.99, random(uv * 100.0 + uTime * 0.01)) * 0.1;
+                    vec2 q = vec2(fbm(uv + uTime*0.02), fbm(uv + vec2(5.2, 1.3))); float r = fbm(uv + 4.0*q);
+                    float crack = smoothstep(0.45, 0.46, r) * smoothstep(0.46, 0.45, r); float bubble = step(0.98, noise(uv * 30.0 + q));
+                    vec3 deepColor = vec3(0.05, 0.2, 0.3); vec3 surfaceColor = vec3(0.8, 0.9, 0.95);
+                    vec3 iceCol = mix(surfaceColor, deepColor, r) * exp(-vec3(0.8, 0.4, 0.1) * r * 1.5);
+                    if(crack > 0.0) { iceCol += vec3(0.2, 0.0, 0.0) * noise(uv + 0.01); iceCol += vec3(0.0, 0.0, 0.2) * noise(uv - 0.01); }
+                    iceCol += vec3(1.0) * bubble * 0.8; iceCol -= vec3(dust * 0.5);
+                    float vig = 1.0 - length(gl_FragCoord.xy / uResolution.xy - 0.5) * 0.5;
+                    gl_FragColor = vec4(iceCol * vig, 1.0);
+                }
+            `,
+            init() { try { this.canvas = document.getElementById('ice-canvas'); if(!this.canvas) return; this.gl = this.canvas.getContext('webgl'); if(!this.gl) return;
+                    const compile = (src, type) => { const shader = this.gl.createShader(type); this.gl.shaderSource(shader, src); this.gl.compileShader(shader); if(!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) return null; return shader; };
+                    const vs = compile(this.vsSource, this.gl.VERTEX_SHADER); const fs = compile(this.fsSource, this.gl.FRAGMENT_SHADER); if(!vs || !fs) return;
+                    this.program = this.gl.createProgram(); this.gl.attachShader(this.program, vs); this.gl.attachShader(this.program, fs); this.gl.linkProgram(this.program);
+                    const buf = this.gl.createBuffer(); this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buf); this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([-1,1,1,1,-1,-1,1,-1]), this.gl.STATIC_DRAW);
+                    this.resize(); window.addEventListener('resize', () => this.resize()); } catch(e) { console.log('WebGL Init Failed', e); } },
+            resize() { if(!this.canvas || !this.gl) return; this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight; this.gl.viewport(0, 0, this.canvas.width, this.canvas.height); },
+            render(t) { if(!this.running || !this.gl || !this.program) return; this.gl.useProgram(this.program);
+                const posLoc = this.gl.getAttribLocation(this.program, 'aVertexPosition'); this.gl.enableVertexAttribArray(posLoc); this.gl.vertexAttribPointer(posLoc, 2, this.gl.FLOAT, false, 0, 0);
+                this.gl.uniform2f(this.gl.getUniformLocation(this.program, 'uResolution'), this.canvas.width, this.canvas.height);
+                this.gl.uniform1f(this.gl.getUniformLocation(this.program, 'uTime'), (t - this.startTime) * 0.0002);
+                this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4); requestAnimationFrame((time) => this.render(time)); },
+            start() { if(!this.gl) this.init(); this.running = true; this.startTime = performance.now(); this.canvas.classList.add('active'); requestAnimationFrame((t) => this.render(t)); },
+            stop() { this.running = false; if(this.canvas) this.canvas.classList.remove('active'); }
+        };
+
+        const IceRoom = {
+            active: false, logTimer: null,
+            enter() { this.active = true; IceGlManager.start(); document.getElementById('sidebar').style.opacity = '0'; document.getElementById('sidebar-toggle').style.opacity = '0'; document.getElementById('ice-ui').classList.add('active'); AudioManager.playBeamCharge(); },
+            exit() { 
+                this.active = false; IceGlManager.stop(); document.getElementById('ice-ui').classList.remove('active'); 
+                document.getElementById('sidebar').style.opacity = '1'; document.getElementById('sidebar-toggle').style.opacity = '1'; 
+                this.cancelLogs();
+            },
+            cancelLogs() {
+                clearTimeout(this.logTimer);
+                document.getElementById('ice-terminal').style.display = 'none';
+                document.getElementById('btn-decipher').style.display = 'block';
+                document.getElementById('ice-log-content').innerHTML = '';
+                AudioManager.playClick();
+            },
+            triggerLogs() {
+                const btn = document.getElementById('btn-decipher'); const term = document.getElementById('ice-terminal'); const content = document.getElementById('ice-log-content');
+                btn.style.display = 'none'; term.style.display = 'block'; content.innerHTML = '';
+                const logs = [ "“这是第 413 天。气泡不再上升。”", "“我看到了光透过冰层的折射——它们变得扭曲、破碎，像我们被肢解的时间线。”", "“如果有人能读到这行字……说明春天永远不会来了。”" ];
+                let lineIdx = 0; const self = this;
+                function playNext() {
+                    if (lineIdx < logs.length) {
+                        const p = document.createElement('p'); p.className = "mb-4 opacity-0 transition-opacity duration-1000"; p.innerText = logs[lineIdx];
+                        content.appendChild(p); setTimeout(() => p.classList.remove('opacity-0'), 100); AudioManager.playType();
+                        lineIdx++; self.logTimer = setTimeout(playNext, 2500);
+                    } else { self.logTimer = setTimeout(() => { self.triggerCrash(); }, 10000); }
+                }
+                playNext();
+            },
+            triggerCrash() { AudioManager.playBeamImpact(); window.showModal('FATAL ERROR', '系统侦测到思维污染。<br>强制切断连接。<br>SYSTEM_HALT', 'system'); setTimeout(() => { window.closeModal(); this.exit(); }, 2000); }
+        };
+
+        // === AUDIO ===
+        const AudioManager = {
+            ctx: null, masterGain: null, isMuted: true, activeNodes: [], schedulerTimer: null, nextNoteTime: 0.0, beatCount: 0, scale: [48, 51, 53, 55, 58, 60, 63], 
+            init() { if(this.ctx) return; const AudioContext = window.AudioContext || window.webkitAudioContext; this.ctx = new AudioContext(); this.masterGain = this.ctx.createGain(); this.masterGain.gain.value = 0.5; const compressor = this.ctx.createDynamicsCompressor(); compressor.connect(this.ctx.destination); this.masterGain.connect(compressor); },
+            toggle() { const btn = document.getElementById('audio-toggle'); if (this.isMuted) { this.init(); if (this.ctx.state === 'suspended') this.ctx.resume(); this.startMusic(); this.isMuted = false; btn.innerText = "AUDIO: SYNTHWAVE ON"; btn.classList.add('active'); } else { this.stopMusic(); this.isMuted = true; btn.innerText = "AUDIO: OFF"; btn.classList.remove('active'); } },
+            startMusic() { this.nextNoteTime = this.ctx.currentTime + 0.1; this.beatCount = 0; this.schedule(); },
+            stopMusic() { clearTimeout(this.schedulerTimer); this.activeNodes.forEach(n => { try{n.stop()}catch(e){}; try{n.disconnect()}catch(e){} }); this.activeNodes = []; },
+            schedule() { const secondsPerBeat = 0.15; const lookahead = 0.1; while (this.nextNoteTime < this.ctx.currentTime + lookahead) { this.playStep(this.nextNoteTime, this.beatCount); this.nextNoteTime += secondsPerBeat; this.beatCount++; } this.schedulerTimer = setTimeout(() => this.schedule(), 25); },
+            playStep(time, step) { const pos = step % 16; const bar = Math.floor(step / 16) % 4; if (pos % 2 === 0) { let freq = 65.41; if(bar===1)freq=51.91; if(bar===2)freq=58.27; if(bar===3)freq=49.00; if(pos===14)freq*=2; this.synthBass(freq, time, 0.2); } if (pos === 0) { let root = 261.63; if(bar===1)root=207.65; if(bar===2)root=233.08; if(bar===3)root=196.00; this.synthPad(root, time, 2.4); } if ([0,3,6,8,11,14].includes(pos) && Math.random()>0.3) { const freq = 440 * Math.pow(2, (this.scale[Math.floor(Math.random()*this.scale.length)] - 69) / 12); this.synthArp(freq, time, 0.1); } },
+            synthBass(freq, time, dur) { const osc = this.ctx.createOscillator(); osc.type='triangle'; osc.frequency.value=freq; const g = this.ctx.createGain(); g.gain.setValueAtTime(0, time); g.gain.linearRampToValueAtTime(0.4, time+0.02); g.gain.exponentialRampToValueAtTime(0.001, time+dur); osc.connect(g); g.connect(this.masterGain); osc.start(time); osc.stop(time+dur+0.1); },
+            synthPad(freq, time, dur) { const osc = this.ctx.createOscillator(); osc.type='sawtooth'; osc.frequency.value=freq; const g = this.ctx.createGain(); g.gain.setValueAtTime(0, time); g.gain.linearRampToValueAtTime(0.1, time+1); g.gain.linearRampToValueAtTime(0, time+dur); const f = this.ctx.createBiquadFilter(); f.frequency.value=200; osc.connect(f); f.connect(g); g.connect(this.masterGain); osc.start(time); osc.stop(time+dur+1); },
+            synthArp(freq, time, dur) { const osc = this.ctx.createOscillator(); osc.type='sine'; osc.frequency.value=freq; const g = this.ctx.createGain(); g.gain.setValueAtTime(0, time); g.gain.linearRampToValueAtTime(0.08, time+0.01); g.gain.exponentialRampToValueAtTime(0.001, time+0.4); osc.connect(g); g.connect(this.masterGain); osc.start(time); osc.stop(time+0.5); },
+            playClick() { if(this.isMuted)return; const o=this.ctx.createOscillator(); const g=this.ctx.createGain(); o.frequency.setValueAtTime(3000,this.ctx.currentTime); o.frequency.exponentialRampToValueAtTime(100,this.ctx.currentTime+0.05); g.gain.setValueAtTime(0.05,this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,this.ctx.currentTime+0.05); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+0.05); },
+            playType() { if(this.isMuted)return; const o=this.ctx.createOscillator(); const g=this.ctx.createGain(); o.type='square'; o.frequency.value=1200; g.gain.setValueAtTime(0.01,this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,this.ctx.currentTime+0.02); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+0.02); },
+            playDataBeep() { if(this.isMuted)return; const o=this.ctx.createOscillator(); const g=this.ctx.createGain(); o.frequency.setValueAtTime(600+Math.random()*500,this.ctx.currentTime); g.gain.setValueAtTime(0.05,this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,this.ctx.currentTime+0.08); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+0.1); },
+            playBeamCharge() { if(this.isMuted)return; const o=this.ctx.createOscillator(); const g=this.ctx.createGain(); o.frequency.setValueAtTime(200,this.ctx.currentTime); o.frequency.exponentialRampToValueAtTime(1200,this.ctx.currentTime+1); g.gain.setValueAtTime(0,this.ctx.currentTime); g.gain.linearRampToValueAtTime(0.3,this.ctx.currentTime+0.9); g.gain.linearRampToValueAtTime(0,this.ctx.currentTime+1); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+1); },
+            playBeamImpact() { if(this.isMuted)return; const o=this.ctx.createOscillator(); o.type='square'; o.frequency.setValueAtTime(100,this.ctx.currentTime); o.frequency.exponentialRampToValueAtTime(20,this.ctx.currentTime+2); const g=this.ctx.createGain(); g.gain.setValueAtTime(0.6,this.ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001,this.ctx.currentTime+2); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime+2); },
+            playTrainClank(mult) { if(this.isMuted)return; const t=this.ctx.currentTime; const o=this.ctx.createOscillator(); o.frequency.setValueAtTime(150,t); o.frequency.exponentialRampToValueAtTime(40,t+0.1); const g=this.ctx.createGain(); g.gain.setValueAtTime(Math.min(2,0.4*mult),t); g.gain.exponentialRampToValueAtTime(0.001,t+0.1); o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(t+0.1); }
+        };
+
+        // === VISUALS ===
+        const EffectController = {
+            canvas: null, ctx: null, activeEffect: null, animationId: null, snowHeight: 0, lastTime: 0, trainTimer: 0,
+            init() { this.canvas = document.getElementById('particle-canvas'); this.ctx = this.canvas.getContext('2d'); window.addEventListener('resize', ()=>this.resize()); this.resize(); },
+            resize() { if(!this.canvas)return; this.canvas.width=this.canvas.parentElement.offsetWidth; this.canvas.height=this.canvas.parentElement.offsetHeight; },
+            clear() { if(this.ctx)this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height); },
+            stop() { if(this.animationId)cancelAnimationFrame(this.animationId); this.clear(); this.activeEffect=null; document.getElementById('snow-pile').style.height='0px'; this.snowHeight=0; },
+            start(type) { this.stop(); this.activeEffect=type; this.animate(0); },
+            animate(timestamp) {
+                if(!this.activeEffect) return;
+                const dt = timestamp - this.lastTime; this.lastTime = timestamp; this.clear();
+                if(this.activeEffect === 'intro') this.drawIntro();
+                else if(this.activeEffect === 'beam') this.drawBeam();
+                else if(this.activeEffect === 'snow') this.drawSnow();
+                else if(this.activeEffect === 'train') this.drawTrain(dt);
+                else if(this.activeEffect === 'library') this.drawLibrary();
+                this.animationId = requestAnimationFrame((t) => this.animate(t));
+            },
+            
+            introDrops: [],
+            drawIntro() {
+                if(this.introDrops.length===0) this.introDrops=Array(Math.floor(this.canvas.width/20)).fill(0);
+                this.ctx.fillStyle='#14b8a6'; this.ctx.font='10px "Space Mono"';
+                this.introDrops.forEach((y,i)=>{
+                    if(Math.random()>0.98)this.ctx.fillText(String.fromCharCode(0x30A0+Math.random()*96),i*20,y*20);
+                    if(y*20>this.canvas.height && Math.random()>0.975)this.introDrops[i]=0; this.introDrops[i]++;
+                });
+            },
+            
+            beamState: { building: true, exploded: false, particles: [], skyline: [] },
+            resetBeam() { this.beamState.building=true; this.beamState.exploded=false; this.beamState.particles=[]; this.beamState.skyline=[]; const cx=this.canvas.width/2; for(let i=-15;i<=15;i++) this.beamState.skyline.push({x:cx+(i*25),w:20+Math.random()*8,h:100+Math.random()*350,color:Math.random()>0.5?'#18181b':'#27272a'}); },
+            triggerBeam() { 
+                if(!this.beamState.building && this.beamState.exploded){this.resetBeam();return;}
+                AudioManager.playBeamCharge(); document.getElementById('beam-flash').style.opacity=1;
+                setTimeout(()=>{ document.getElementById('beam-flash').style.opacity=0; setTimeout(()=>{ this.beamState.building=false; this.beamState.exploded=true; const cy=this.canvas.height; this.beamState.skyline.forEach(b=>{ for(let i=0;i<15;i++) this.beamState.particles.push({x:b.x+Math.random()*b.w,y:cy-Math.random()*b.h,vx:(Math.random()-0.5)*15,vy:(Math.random()-0.5)*20-10,life:1,size:Math.random()*4+2,color:b.color}); }); AudioManager.playBeamImpact(); },150); },500);
+            },
+            drawBeam() {
+                const cy=this.canvas.height; if(this.beamState.skyline.length===0)this.resetBeam();
+                if(this.beamState.building) this.beamState.skyline.forEach(b=>{ this.ctx.fillStyle=b.color; this.ctx.fillRect(b.x,cy-b.h,b.w,b.h); });
+                else if(this.beamState.exploded) this.beamState.particles.forEach(p=>{ this.ctx.globalAlpha=p.life; this.ctx.fillStyle=p.color; this.ctx.beginPath(); this.ctx.arc(p.x,p.y,p.size,0,Math.PI*2); this.ctx.fill(); p.x+=p.vx; p.y+=p.vy; p.vy+=0.5; p.life-=0.01; }); this.ctx.globalAlpha=1;
+            },
+            
+            snowParticles: [],
+            drawSnow() {
+                this.ctx.fillStyle='rgba(22, 78, 99, 0.15)'; this.ctx.beginPath(); this.ctx.moveTo(this.canvas.width*0.2,this.canvas.height); for(let i=0;i<10;i++){this.ctx.fillRect(this.canvas.width*0.2-30+(Math.sin(i)*20),this.canvas.height-(i*40),60,40);}
+                if(this.snowParticles.length===0)this.snowParticles=Array.from({length:100},()=>({x:Math.random()*this.canvas.width,y:Math.random()*this.canvas.height,speed:Math.random()*2+1,size:Math.random()*3}));
+                this.ctx.fillStyle='rgba(148, 163, 184, 0.8)';
+                this.snowParticles.forEach(p=>{ this.ctx.beginPath(); this.ctx.arc(p.x,p.y,p.size,0,Math.PI*2); this.ctx.fill(); p.y+=p.speed; p.x+=Math.sin(p.y*0.01); if(p.y>this.canvas.height){p.y=-5;p.x=Math.random()*this.canvas.width; if(Math.random()>0.1){this.snowHeight=Math.min(this.snowHeight+0.8,300); document.getElementById('snow-pile').style.height=this.snowHeight+'px';}} });
+            },
+            
+            trainObjects: [], // Combined lines and buildings
+            drawTrain(dt) {
+                const mult = (window.trainSpeedMult !== undefined ? window.trainSpeedMult : 1);
+                this.trainTimer += dt;
+                if(this.trainTimer > 200/Math.max(1,Math.sqrt(mult)) && mult < 20 && mult > 0){ AudioManager.playTrainClank(mult); this.trainTimer = 0; }
+
+                const grd = this.ctx.createLinearGradient(0, this.canvas.height - 100, 0, this.canvas.height);
+                grd.addColorStop(0, "rgba(248, 250, 252, 0)"); grd.addColorStop(1, "#cbd5e1");
+                this.ctx.fillStyle = grd; this.ctx.fillRect(0, this.canvas.height - 100, this.canvas.width, 100);
+
+                if(this.trainObjects.length === 0) {
+                    // Init mixed objects
+                    // Type 0: Building, Type 1: Line
+                    for(let i=0; i<45; i++) {
+                        const isLine = Math.random() > 0.4;
+                        this.trainObjects.push({
+                            type: isLine ? 1 : 0,
+                            x: Math.random()*this.canvas.width,
+                            y: isLine ? Math.random()*this.canvas.height : Math.random()*this.canvas.height * 0.8,
+                            w: Math.random()*100+50,
+                            h: isLine ? 2 : Math.random()*150+100, // Height if building
+                            shade: Math.random()*50+200
+                        });
+                    }
+                }
+
+                // Sort by Y to mix lines into buildings (Z-sorting)
+                this.trainObjects.sort((a,b) => a.y - b.y);
+
+                const speed = mult * 20;
+
+                this.trainObjects.forEach(obj => {
+                    if(obj.type === 0) { // Building
+                        this.ctx.fillStyle = `rgb(${obj.shade},${obj.shade},${obj.shade})`; 
+                        this.ctx.fillRect(obj.x, obj.y, obj.w, this.canvas.height - obj.y);
+                        this.ctx.strokeStyle = '#94a3b8'; 
+                        this.ctx.strokeRect(obj.x+5, obj.y+5, obj.w-10, (this.canvas.height - obj.y)-10);
+                        if(mult > 0) { obj.x -= speed; if(obj.x + obj.w < 0) { obj.x = this.canvas.width + Math.random() * 200; obj.y = Math.random() * this.canvas.height * 0.8; } }
+                    } else { // Line
+                        this.ctx.fillStyle = '#94a3b8';
+                        this.ctx.fillRect(obj.x, obj.y, obj.w, 2);
+                        if(mult > 0) { obj.x -= speed; if(obj.x + obj.w < 0) { obj.x = this.canvas.width + 100; obj.y = Math.random()*this.canvas.height; } }
+                    }
+                });
+            },
+            
+            libParticles: [],
+            drawLibrary() {
+                if(Math.random() > 0.95) {
+                    const chars = ["∑", "Ω", "†", "∂", "æ", "0x5F", "null", "err"];
+                    this.libParticles.push({
+                        x: Math.random() * this.canvas.width, y: this.canvas.height, 
+                        text: chars[Math.floor(Math.random()*chars.length)],
+                        speed: Math.random() * 1 + 0.5, size: Math.random() * 14 + 10, opacity: 1.0, rot: (Math.random()-0.5) * 0.5
+                    });
+                }
+                this.ctx.save();
+                for (let i = this.libParticles.length - 1; i >= 0; i--) {
+                    const p = this.libParticles[i];
+                    this.ctx.globalAlpha = p.opacity; this.ctx.font = `italic ${p.size}px "Noto Serif SC"`;
+                    this.ctx.shadowColor = "rgba(113, 63, 18, 0.2)"; this.ctx.shadowBlur = 4;
+                    this.ctx.fillStyle = `rgba(120, 50, 50, ${p.opacity})`; 
+                    this.ctx.translate(p.x, p.y); this.ctx.rotate(p.rot); this.ctx.fillText(p.text, 0, 0);
+                    this.ctx.rotate(-p.rot); this.ctx.translate(-p.x, -p.y);
+                    p.y -= p.speed; p.opacity -= 0.003; p.rot += 0.001;
+                    if (p.opacity <= 0) this.libParticles.splice(i, 1);
+                }
+                this.ctx.restore();
+            }
+        };
+
+        // === LOGIC ===
+        const navItems = [
+            { id: 'home', label: '00_序言', theme: 'theme-intro' }, { id: 'beam', label: '01_审判', theme: 'theme-beam' },
+            { id: 'city', label: '02_冻土', theme: 'theme-city' }, { id: 'holograms', label: '03_回声', theme: 'theme-holograms' },
+            { id: 'library', label: '04_叹息', theme: 'theme-library' }, { id: 'train', label: '05_银矢', theme: 'theme-train' },
+            { id: 'final', label: 'Ω_终章', theme: 'theme-final' }
+        ];
+
+        function bootSystem() {
+            AudioManager.toggle();
+            const overlay = document.getElementById('startup-overlay'); const wrapper = document.getElementById('app-wrapper');
+            overlay.innerHTML = "<div class='text-teal-500 font-sys text-xs'>BOOT_SEQ: 0x1<br>LOADING_KERNEL...<br>RESTORING_UI...</div>";
+            setTimeout(() => { overlay.style.opacity = '0'; setTimeout(() => overlay.remove(), 1000); wrapper.classList.remove('opacity-0'); EffectController.init(); switchTab('home', 'theme-intro'); }, 1200);
+        }
+
+        function switchTab(targetId, themeClass) {
+            AudioManager.playClick(); if(IceRoom.active) IceRoom.exit(); 
+            document.querySelectorAll('.nav-link').forEach(l => { if(l.dataset.target === targetId) { l.classList.add('text-teal-400', 'bg-zinc-900'); l.classList.remove('text-zinc-500'); } else { l.classList.remove('text-teal-400', 'bg-zinc-900'); l.classList.add('text-zinc-500'); } });
+            document.getElementById('main-bg-layer').className = `absolute inset-0 z-[-1] transition-colors duration-700 ${themeClass}`;
+            document.getElementById('content-scroll-area').className = `text-${themeClass} absolute inset-0 overflow-y-auto z-10 scroll-smooth`;
+            document.querySelectorAll('.content-section').forEach(s => { if(s.id === targetId) { s.classList.remove('hidden'); setTimeout(() => { s.querySelectorAll('.reveal-text').forEach((el, i) => { el.classList.remove('visible'); setTimeout(() => el.classList.add('visible'), i * 100); }); }, 50); } else s.classList.add('hidden'); });
+            document.querySelector('.final-reveal-text').classList.remove('visible'); document.getElementById('final-content').style.opacity = '1';
+            let effectType = null; if(targetId === 'home') effectType = 'intro'; else if(targetId === 'beam') effectType = 'beam'; else if(targetId === 'city') effectType = 'snow'; else if(targetId === 'train') effectType = 'train'; else if(targetId === 'library') effectType = 'library';
+            EffectController.start(effectType);
+            clearInterval(window.speedInterval); if (targetId === 'train') startTrainSimulation();
+        }
+
+        window.decrypt = function(el) { if(!el.classList.contains('decrypted')) { el.classList.add('decrypted'); AudioManager.playClick(); } };
+        window.runTerminal = function(btn, containerId, lines) {
+            AudioManager.playClick(); const container = document.getElementById(containerId); const btnId = 'btn-' + containerId; btn.id = btnId;
+            container.innerHTML = '<div class="terminal-close-btn" onclick="closeTerminal(\''+containerId+'\', \''+btnId+'\')">[X]</div>';
+            btn.style.display = 'none'; container.classList.add('active'); container.style.display = 'block';
+            let i = 0; function typeLine() { if(i < lines.length) { const p = document.createElement('div'); p.className = 'terminal-line'; p.textContent = lines[i]; container.appendChild(p); setTimeout(() => p.classList.add('typed'), 50); AudioManager.playType(); i++; setTimeout(typeLine, 200); } } typeLine();
+        };
+        window.closeTerminal = function(cId, bId) { document.getElementById(cId).classList.remove('active'); document.getElementById(cId).style.display = 'none'; document.getElementById(bId).style.display = 'inline-block'; AudioManager.playClick(); };
+
+        window.unlockBeam = (btn) => runTerminal(btn, 'terminal-beam', ['> 分析土壤成分...', '> 结果：99.9% 纯净灰烬', '> 结论：绝对虚无']);
+        window.unlockCity = (btn) => runTerminal(btn, 'terminal-city', ['> 测量环境温度: -74°C', '> 冰层成分：40% 水, 60% 骨灰', '> 状态：窒息中']);
+        window.unlockTrain = (btn) => runTerminal(btn, 'terminal-train', ['> 检查列车时刻表...', '> 下一站：中央商务区（废墟）', '> 下一站：居住区（灰烬）']);
+        window.unlockHologram = (btn) => {
+            AudioManager.playClick(); const box = document.getElementById('hologram-output'); box.innerHTML = ''; 
+            const closeBtn = document.createElement('div'); closeBtn.className = "terminal-close-btn"; closeBtn.innerText = "[X]"; closeBtn.onclick = () => { box.classList.remove('active'); box.style.display = 'none'; btn.style.display = 'inline-block'; AudioManager.playClick(); };
+            box.appendChild(closeBtn); btn.id = 'btn-holo'; btn.style.display = 'none'; box.classList.add('active'); box.style.display = 'block';
+            const messages = ["侦测到回应...", "解析音频流...", "错误：信号不稳定", "信息重组中..."]; let i = 0;
+            function updateLog() { if(i < messages.length) { const p = document.createElement('div'); p.className = "mb-1 opacity-50"; p.innerText = messages[i]; box.appendChild(p); AudioManager.playDataBeep(); i++; setTimeout(updateLog, 150); } else { setTimeout(() => { const finalMsg = document.createElement('div'); finalMsg.innerHTML = `<div class="mt-4 text-white font-bold text-lg glitch-hover">“帮我关掉这东西吧。”</div><div class="text-xs mt-1 italic text-teal-500/50">"Turn this thing off for me."</div>`; box.appendChild(finalMsg); AudioManager.playClick(); }, 400); } } updateLog();
+        };
+
+        window.triggerBeamAnimation = () => EffectController.triggerBeam();
+        window.trainSpeedMult = 1; let trainSpeedLevel = 0; let baseSpeed = 2400; window.speedInterval = null;
+        function startTrainSimulation() {
+            const display = document.getElementById('vel-display'); if(!display) return;
+            trainSpeedLevel = 0; baseSpeed = 2400; window.trainSpeedMult = 1;
+            const btn = document.getElementById('speed-btn'); if(btn) { btn.innerText = "[ ENGAGE ACCELERATION ]"; btn.className = "font-sys text-[10px] border border-slate-400 text-slate-500 px-3 py-1 hover:bg-red-50 hover:text-red-500 transition-colors"; }
+            const strips = document.getElementById('speed-strips'); if(strips) strips.style.animationPlayState = 'running';
+            window.speedInterval = setInterval(() => { const display = document.getElementById('vel-display'); if (!display) return; if (baseSpeed === 'INF') { display.innerText = ['∞', 'INF', 'NULL'][Math.floor(Math.random()*3)]; } else if (baseSpeed === 0) { display.innerText = "0"; } else { display.innerText = (baseSpeed + Math.floor(Math.random() * 15) - 7); } }, 100); 
+        }
+
+        window.cycleSpeed = (btn) => {
+            AudioManager.playClick(); trainSpeedLevel = (trainSpeedLevel + 1) % 5; 
+            const strips = document.getElementById('speed-strips');
+            if (trainSpeedLevel === 0) { window.trainSpeedMult = 1; baseSpeed = 2400; btn.innerText = "[ ENGAGE ACCELERATION ]"; strips.style.animationDuration = '0.1s'; } 
+            else if (trainSpeedLevel === 1) { window.trainSpeedMult = 2; baseSpeed = 4800; btn.innerText = "[ SPEED LEVEL 2 ]"; strips.style.animationDuration = '0.05s'; } 
+            else if (trainSpeedLevel === 2) { window.trainSpeedMult = 5; baseSpeed = 9600; btn.innerText = "[ MAX VELOCITY ]"; strips.style.animationDuration = '0.02s'; } 
+            else if (trainSpeedLevel === 3) { window.trainSpeedMult = 50; baseSpeed = 'INF'; btn.innerText = "[ TRANSCENDENCE ]"; strips.style.animationDuration = '0.005s'; } 
+            else if (trainSpeedLevel === 4) { window.trainSpeedMult = 0; baseSpeed = 0; btn.innerText = "[ EMERGENCY STOP ]"; strips.style.animationPlayState = 'paused'; }
+            if(trainSpeedLevel !== 4) strips.style.animationPlayState = 'running';
+            EffectController.start('train');
+        };
+
+        window.revealFinal = () => { document.getElementById('final-content').style.opacity = 0; document.querySelector('.final-reveal-text').classList.add('visible'); AudioManager.stopMusic(); };
+        
+        window.toggleSidebar = () => {
+            const sidebar = document.getElementById('sidebar'); const backdrop = document.getElementById('sidebar-backdrop');
+            if (window.innerWidth >= 768) { sidebar.classList.toggle('pc-collapsed'); } else { if(sidebar.classList.contains('visible')) { sidebar.classList.remove('visible'); backdrop.classList.remove('visible'); } else { sidebar.classList.add('visible'); backdrop.classList.add('visible'); } }
+        };
+
+        const navList = document.getElementById('nav-list');
+        navItems.forEach(item => {
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="#" class="nav-link flex items-center px-8 py-3 text-zinc-500 hover:text-zinc-200 transition-colors font-sys text-xs group" data-target="${item.id}"><span class="w-4 opacity-30 group-hover:opacity-100 mr-3">></span><span class="tracking-wider">${item.label}</span></a>`;
+            navList.appendChild(li);
+        });
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => link.addEventListener('click', (e) => { e.preventDefault(); switchTab(link.dataset.target, navItems.find(i=>i.id===link.dataset.target).theme); if(window.innerWidth < 768) { document.getElementById('sidebar').classList.remove('visible'); document.getElementById('sidebar-backdrop').classList.remove('visible'); } }));
+        window.showModal = (t, m, type) => {
+            const modalBox = document.getElementById('modal-box'); document.getElementById('modal-title').innerText = t; document.getElementById('modal-message').innerHTML = m;
+            modalBox.classList.remove('type-system'); if (type === 'system') modalBox.classList.add('type-system'); document.getElementById('modal-overlay').style.display = 'flex'; AudioManager.playClick();
+        };
+        window.closeModal = () => document.getElementById('modal-overlay').style.display = 'none';
+    </script>
+</body>
+</html>
