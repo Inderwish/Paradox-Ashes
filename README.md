@@ -1,8 +1,6 @@
 # AI-Generated-Content-
 # 悖论的灰烬：v3.0 (Paradox Ashes)
 
-> "别忘了那个矛盾。" —— 前文明最后的低语
-Demo:https://inderwish.github.io/AI-Generated-Content-/
 ---
 
 ## 🌌 项目简介 (Introduction)
@@ -22,8 +20,7 @@ Demo:https://inderwish.github.io/AI-Generated-Content-/
 
 ### 👁️ 视觉特效系统
 * **CRT 风格滤镜:** 模拟旧时代显示器的扫描线与辉光，营造复古科幻感。
-* **粒子生态:** * `Beam`: 纯白的审判光束![Screenshot_20251123_170357](https://github.com/user-attachments/assets/3554383b-bb36-486c-9117-6f6ed13304e6)
-
+* **粒子生态:** * `Beam`: 纯白的审判光束!
     * `City`: 混合了骨灰的肮脏降雪
     * `Train`: 模拟超高速列车的视觉暂留线条
 * **无缝主题切换:** 随着章节推进，页面的配色、光影与粒子逻辑会实时平滑过渡。
@@ -55,4 +52,5 @@ Demo:https://inderwish.github.io/AI-Generated-Content-/
 ---
 
 *If you hear the hum, the system is alive.*
-![Screenshot_20251123_170418](https://github.com/user-attachments/assets/d30a7a08-e17b-4f79-820d-23834c567f8a)
+
+![Screenshot_20251123_170357_edit_121624253503094](https://github.com/user-attachments/assets/8fd437e8-4da8-486f-9cf9-8867786aed8c)
