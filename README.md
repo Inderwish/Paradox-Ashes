@@ -42,7 +42,7 @@
 * **Beam:** 粒子爆发与物理下落模拟。
 * **Snow:** 堆积算法，雪会随着时间在屏幕底部积聚。
 * **Train:** 视觉暂留模拟的高速列车线条。
-![Uploading image.png…]()
+<img width="2113" height="1331" alt="image" src="https://github.com/user-attachments/assets/2cf0f871-1fe9-46da-a867-fd1bf978ca68" />
 
 ## 🚀 如何运行 (How to Run)
 
