@@ -1,0 +1,6 @@
+export class SceneDirector {
+  constructor(THREE,scene,camera,worlds,presets){this.THREE=THREE;this.scene=scene;this.camera=camera;this.worlds=worlds;this.presets=presets;this.active='origin';this.targetPosition=new THREE.Vector3();this.targetLook=new THREE.Vector3();this.look=new THREE.Vector3();this.pointer=new THREE.Vector2();this.flight=1}
+  activate(name){this.active=name;Object.values(this.worlds).forEach(world=>world.visible=world.name===name);const preset=this.presets[name];this.targetPosition.fromArray(preset.position);this.targetLook.fromArray(preset.look);this.scene.fog.color.setHex(preset.color);this.scene.background.setHex(preset.color);this.scene.fog.density=preset.fog;this.flight=0}
+  pointerMove(x,y){this.pointer.set(x,y)}
+  update(dt,reducedMotion=false){this.flight=Math.min(1,this.flight+dt*(reducedMotion?20:.7));const ease=1-Math.pow(1-this.flight,3);const city=['megacity','frozen','train'].includes(this.active),offset=new this.THREE.Vector3(this.pointer.x*(city?1.7:.5),this.pointer.y*.42,0);const desired=this.targetPosition.clone().add(offset);this.camera.position.lerp(desired,reducedMotion?1:.018+.055*ease);this.look.lerp(this.targetLook,reducedMotion?1:.026+.06*ease);this.camera.lookAt(this.look)}
+}
