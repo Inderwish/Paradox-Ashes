@@ -4,11 +4,15 @@
 
 ## 运行
 
+直接双击根目录的 `index.html` 即可运行。
+
+也可以通过本地服务器启动：
+
 ```bash
-python3 -m http.server 4173
+python3 -m http.server 4174
 ```
 
-打开 `http://localhost:4173`。
+打开 `http://localhost:4174`。
 
 ## 当前重构范围
 
@@ -17,5 +21,3 @@ python3 -m http.server 4173
 - 几何城市、冰封都市、记忆空间、无限书库、时间列车及终章灰烬场景
 - 键盘、滚轮与章节轨道导航
 - 响应式 HUD 与 reduced-motion 支持
-
-> 请打开项目根目录的 `index.html`，不要直接双击 HTML 文件；ES 模块需要通过本地 HTTP 服务运行。
