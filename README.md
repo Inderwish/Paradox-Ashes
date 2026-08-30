@@ -18,4 +18,4 @@ python3 -m http.server 4173
 - 键盘、滚轮与章节轨道导航
 - 响应式 HUD 与 reduced-motion 支持
 
-旧版单文件实现保存在 `legacy/v5.4.html`。
+> 请打开项目根目录的 `index.html`，不要直接双击 HTML 文件；ES 模块需要通过本地 HTTP 服务运行。

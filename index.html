@@ -60,6 +60,18 @@
   </main>
 
   <div id="rotate" class="rotate">请横屏观看完整场景</div>
+  <script>
+    if (location.protocol === "file:") {
+      document.addEventListener("DOMContentLoaded", () => {
+        const button = document.getElementById("enter");
+        if (button) {
+          button.querySelector("span").textContent = "需要本地服务器";
+          button.querySelector("small").textContent = "RUN: python3 -m http.server 4173";
+          button.addEventListener("click", () => alert("ES 模块无法通过 file:// 直接运行。请在此目录运行 python3 -m http.server 4173，然后访问 http://localhost:4173。"), { once: false });
+        }
+      });
+    }
+  </script>
   <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js"}}</script>
   <script type="module" src="src/app.js"></script>
 </body>
