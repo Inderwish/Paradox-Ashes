@@ -1,0 +1,5 @@
+export const $ = selector => document.querySelector(selector);
+export function seededRandom(seed){ let value=seed>>>0; return ()=>((value=(value*1664525+1013904223)>>>0)/4294967296); }
+export function material(THREE,color,roughness=.65,metalness=.25){ return new THREE.MeshStandardMaterial({color,roughness,metalness}); }
+export function box(THREE,parent,w,h,d,meshMaterial,x,y,z){ const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),meshMaterial); mesh.position.set(x,y,z); mesh.castShadow=mesh.receiveShadow=true; parent.add(mesh); return mesh; }
+export function particles(THREE,parent,count,color,size,spread,random=seededRandom(count+Math.round(size*1000))){ const geometry=new THREE.BufferGeometry(), positions=new Float32Array(count*3); for(let i=0;i<count;i++){positions[i*3]=(random()-.5)*spread[0];positions[i*3+1]=(random()-.5)*spread[1];positions[i*3+2]=(random()-.5)*spread[2]} geometry.setAttribute('position',new THREE.BufferAttribute(positions,3)); const cloud=new THREE.Points(geometry,new THREE.PointsMaterial({color,size,transparent:true,opacity:.65,depthWrite:false,blending:THREE.AdditiveBlending})); parent.add(cloud); return cloud; }
